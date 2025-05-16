@@ -18,7 +18,7 @@ listenBtn.onclick = () => {
   listening   = true;
   strokeParts = [];
   nonModCount = 0;
-  accelInput.value = 'Listening…';
+  accelInput.value = 'Listening...';
   accelInput.classList.add('listening');
 };
 
@@ -62,7 +62,7 @@ async function refreshList() {
   listEl.innerHTML = '';
   bindings.forEach(b => {
     const li = document.createElement('li');
-    li.textContent = `${b.accelerator} → ${b.app} `;
+    li.textContent = `${b.accelerator} -> ${b.app} `;
     const btn = document.createElement('button');
     btn.textContent = 'Remove';
     btn.onclick = async () => {
