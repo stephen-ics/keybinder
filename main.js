@@ -2,36 +2,41 @@
 const { app, BrowserWindow, globalShortcut, ipcMain } = require('electron');
 const Store = require('electron-store');
 const { exec } = require('child_process');
-
 const store = new Store({ name: 'bindings' });
 
+// Helper: register only valid shortcuts
 function registerShortcuts() {
   globalShortcut.unregisterAll();
   const bindings = store.get('bindings', []);
   console.log('Registering shortcuts:', bindings);
 
   bindings.forEach(({ accelerator, app: appName }) => {
-    // Ensure accelerator is a single string with '+' separators
-    const accel = accelerator.replace(/\s+/g, '+');
-    const ok = globalShortcut.register(accel, () => {
-      let cmd;
+    // Skip invalid or placeholder accelerators
+    if (typeof accelerator !== 'string' || !/^[A-Za-z0-9+]+(?:\+[A-Za-z0-9+]+)*$/.test(accelerator)) {
+      console.warn(`Skipping invalid accelerator: "${accelerator}"`);
+      return;
+    }
+
+    const success = globalShortcut.register(accelerator, () => {
+      let command;
       if (process.platform === 'darwin') {
-        cmd = `open -a "${appName}"`;
+        command = `open -a "${appName}"`;
       } else if (process.platform === 'linux') {
-        cmd = `${appName}`;
+        command = `${appName}`;
       } else if (process.platform === 'win32') {
-        cmd = `start "" "${appName}"`;
+        command = `start "" "${appName}"`;
       }
-      console.log(`Executing: ${cmd}`);
-      exec(cmd, err => {
-        if (err) console.error(`Launch error for ${appName}:`, err);
+      console.log(`Executing command for ${accelerator}:`, command);
+      exec(command, err => {
+        if (err) console.error(`Error launching ${appName}:`, err);
       });
     });
 
-    console.log(`  ${accel}: ${ok ? 'OK' : 'FAILED'}`);
+    console.log(`  ${accelerator}: ${success ? 'OK' : 'FAIL'}`);
   });
 }
 
+// Create the settings window
 function createWindow() {
   const win = new BrowserWindow({
     width: 400,
@@ -48,29 +53,35 @@ app.whenReady().then(() => {
   createWindow();
   registerShortcuts();
 
+  // Return current bindings
   ipcMain.handle('get-bindings', () => {
     return store.get('bindings', []);
   });
 
+  // Save or update a binding
   ipcMain.handle('save-binding', (event, binding) => {
-    const list = store.get('bindings', []);
-    // remove any existing entry for this accelerator
-    const filtered = list.filter(b => b.accelerator !== binding.accelerator);
-    filtered.push(binding);
-    store.set('bindings', filtered);
+    const { accelerator, app: appName } = binding;
+    // Validate accelerator format
+    if (typeof accelerator !== 'string' || !accelerator.includes('+')) {
+      throw new Error('Invalid accelerator format');
+    }
+    const existing = store.get('bindings', []).filter(b => b.accelerator !== accelerator);
+    existing.push(binding);
+    store.set('bindings', existing);
     registerShortcuts();
-    return true;
   });
 
+  // Remove a binding by its accelerator
   ipcMain.handle('remove-binding', (event, accelerator) => {
-    const list = store.get('bindings', []);
-    store.set(
-      'bindings',
-      list.filter(b => b.accelerator !== accelerator)
-    );
+    const filtered = (store.get('bindings', [])).filter(b => b.accelerator !== accelerator);
+    store.set('bindings', filtered);
     registerShortcuts();
-    return true;
   });
+});
+
+// Catch any unhandled promise rejections
+process.on('unhandledRejection', err => {
+  console.error('Unhandled promise rejection:', err);
 });
 
 app.on('will-quit', () => {
