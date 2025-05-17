@@ -17,7 +17,7 @@ listenBtn.onclick = () => {
   listening   = true;
   strokeParts = [];
   nonModCount = 0;
-  accelInput.value = 'Listening…';
+  accelInput.value = 'Listening...';
   accelInput.classList.add('listening');
 };
 
@@ -27,29 +27,48 @@ stopBtn.onclick = () => {
   accelInput.classList.remove('listening');
 };
 
-// Capture key combo
+// at top of your renderer file
+const MOD_KEYS = ['Control', 'Shift', 'Alt', 'Meta'];
+let modsRecorded = false;
+
+// Start listening
+listenBtn.onclick = () => {
+  listening     = true;
+  strokeParts   = [];
+  nonModCount   = 0;
+  modsRecorded  = false;      // reset flag
+  accelInput.value = 'Listening…';
+  accelInput.classList.add('listening');
+};
+
 window.addEventListener('keydown', e => {
   if (!listening) return;
-  const mods = ['Control','Shift','Alt','Meta'];
-  if (mods.includes(e.key)) return;
   e.preventDefault();
 
-  if (nonModCount === 0) {
+  // 1) Record modifiers only once
+  if (!modsRecorded) {
     if (e.ctrlKey)  strokeParts.push('Ctrl');
     if (e.shiftKey) strokeParts.push('Shift');
     if (e.altKey)   strokeParts.push('Alt');
     if (e.metaKey)  strokeParts.push('Command');
+    modsRecorded = true;
   }
 
-  strokeParts.push(e.key.toUpperCase());
-  nonModCount++;
+  // 2) Record the actual key if it’s not a modifier
+  if (!MOD_KEYS.includes(e.key)) {
+    strokeParts.push(e.key.toUpperCase());
+    nonModCount++;
+  }
+
   accelInput.value = strokeParts.join('+');
 
+  // 3) Stop after MAX_KEYS non-modifiers
   if (nonModCount >= MAX_KEYS) {
     listening = false;
     accelInput.classList.remove('listening');
   }
 });
+
 
 // Populate dropdown of running apps
 async function loadAppList() {

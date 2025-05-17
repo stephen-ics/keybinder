@@ -54,7 +54,7 @@ function registerShortcuts() {
   for (const { accelerator, app: appName } of bindings) {
     if (
       typeof accelerator !== 'string' ||
-      !accelerator.includes('+') ||
+      // !accelerator.includes('+') ||
       accelerator.startsWith('Listening')
     ) {
       console.warn(`Skipping invalid accelerator: "${accelerator}"`);
