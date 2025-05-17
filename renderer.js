@@ -1,28 +1,27 @@
 const { ipcRenderer } = require('electron');
 
-// UI elements
 const accelInput = document.getElementById('accel');
 const listenBtn  = document.getElementById('listenBtn');
 const stopBtn    = document.getElementById('stopBtn');
 const addBtn     = document.getElementById('addBtn');
-const appInput   = document.getElementById('appName');
+const appSelect  = document.getElementById('appSelect');
 const listEl     = document.getElementById('list');
 
-let listening     = false;
-let strokeParts   = [];
-let nonModCount   = 0;
-const MAX_KEYS    = 3;
+let listening   = false;
+let strokeParts = [];
+let nonModCount = 0;
+const MAX_KEYS  = 3;
 
 // Start listening
 listenBtn.onclick = () => {
   listening   = true;
   strokeParts = [];
   nonModCount = 0;
-  accelInput.value = 'Listening...';
+  accelInput.value = 'Listening…';
   accelInput.classList.add('listening');
 };
 
-// Stop listening manually
+// Stop listening
 stopBtn.onclick = () => {
   listening = false;
   accelInput.classList.remove('listening');
@@ -31,10 +30,8 @@ stopBtn.onclick = () => {
 // Capture key combo
 window.addEventListener('keydown', e => {
   if (!listening) return;
-
   const mods = ['Control','Shift','Alt','Meta'];
-  if (mods.includes(e.key)) return;  // ignore pure modifier presses
-
+  if (mods.includes(e.key)) return;
   e.preventDefault();
 
   if (nonModCount === 0) {
@@ -46,23 +43,34 @@ window.addEventListener('keydown', e => {
 
   strokeParts.push(e.key.toUpperCase());
   nonModCount++;
-
   accelInput.value = strokeParts.join('+');
 
-  // Stop automatically after MAX_KEYS
   if (nonModCount >= MAX_KEYS) {
     listening = false;
     accelInput.classList.remove('listening');
   }
 });
 
-// Fetch & render bindings list
+// Populate dropdown of running apps
+async function loadAppList() {
+  const apps = await ipcRenderer.invoke('get-open-apps');
+  appSelect.innerHTML = '';
+  apps.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    appSelect.appendChild(opt);
+  });
+}
+loadAppList();
+
+// Render saved bindings
 async function refreshList() {
   const bindings = await ipcRenderer.invoke('get-bindings');
   listEl.innerHTML = '';
   bindings.forEach(b => {
     const li = document.createElement('li');
-    li.textContent = `${b.accelerator} -> ${b.app} `;
+    li.textContent = `${b.accelerator} - ${b.app} `;
     const btn = document.createElement('button');
     btn.textContent = 'Remove';
     btn.onclick = async () => {
@@ -73,16 +81,14 @@ async function refreshList() {
     listEl.appendChild(li);
   });
 }
+refreshList();
 
 // Add binding
 addBtn.onclick = async () => {
   const accel   = accelInput.value;
-  const appName = appInput.value;
+  const appName = appSelect.value;
   await ipcRenderer.invoke('save-binding', { accelerator: accel, app: appName });
   accelInput.value = '';
-  appInput.value   = '';
+  loadAppList();
   refreshList();
 };
-
-// Initial load
-refreshList();
