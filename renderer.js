@@ -1,3 +1,4 @@
+// renderer.js
 const { ipcRenderer } = require('electron');
 
 const accelInput = document.getElementById('accel');
@@ -7,68 +8,70 @@ const addBtn     = document.getElementById('addBtn');
 const appSelect  = document.getElementById('appSelect');
 const listEl     = document.getElementById('list');
 
-let listening   = false;
-let strokeParts = [];
-let nonModCount = 0;
-const MAX_KEYS  = 3;
+let listening    = false;
+const strokeParts = [];
+
+// Map DOM KeyboardEvent.key to display names for modifiers
+const KEY_MAP = {
+  Control: 'Ctrl',
+  Shift:   'Shift',
+  Alt:     'Alt',
+  Meta:    'Command'
+};
 
 // Start listening
-listenBtn.onclick = () => {
-  listening   = true;
-  strokeParts = [];
-  nonModCount = 0;
+listenBtn.addEventListener('click', () => {
+  listening = true;
+  strokeParts.length = 0;
   accelInput.value = 'Listening...';
   accelInput.classList.add('listening');
-};
+});
 
 // Stop listening
-stopBtn.onclick = () => {
+stopBtn.addEventListener('click', () => {
   listening = false;
   accelInput.classList.remove('listening');
-};
-
-// at top of your renderer file
-const MOD_KEYS = ['Control', 'Shift', 'Alt', 'Meta'];
-let modsRecorded = false;
-
-// Start listening
-listenBtn.onclick = () => {
-  listening     = true;
-  strokeParts   = [];
-  nonModCount   = 0;
-  modsRecorded  = false;      // reset flag
-  accelInput.value = 'Listening…';
-  accelInput.classList.add('listening');
-};
+});
 
 window.addEventListener('keydown', e => {
   if (!listening) return;
   e.preventDefault();
 
-  // 1) Record modifiers only once
-  if (!modsRecorded) {
-    if (e.ctrlKey)  strokeParts.push('Ctrl');
-    if (e.shiftKey) strokeParts.push('Shift');
-    if (e.altKey)   strokeParts.push('Alt');
-    if (e.metaKey)  strokeParts.push('Command');
-    modsRecorded = true;
+  const key = e.key;
+
+  // 1) Handle modifier keys
+  if (KEY_MAP[key]) {
+    const name = KEY_MAP[key];
+    if (!strokeParts.includes(name)) {
+      strokeParts.push(name);
+      accelInput.value = strokeParts.join('+');
+    }
+    return;
   }
 
-  // 2) Record the actual key if it’s not a modifier
-  if (!MOD_KEYS.includes(e.key)) {
-    strokeParts.push(e.key.toUpperCase());
-    nonModCount++;
+  // 2) Handle letter and digit keys by e.code
+  let displayKey;
+  if (e.code.startsWith('Key')) {
+    // 'KeyA' → 'A'
+    displayKey = e.code.slice(3);
+  } else if (e.code.startsWith('Digit')) {
+    // 'Digit2' → '2'
+    displayKey = e.code.slice(5);
+  } else if (e.code.startsWith('Numpad')) {
+    // 'Numpad1' → '1'
+    displayKey = e.code.slice(6);
+  } else {
+    // Fallback for other keys (arrows, F1, etc.)
+    displayKey = key.length === 1 ? key.toUpperCase() : key;
   }
 
+  strokeParts.push(displayKey);
   accelInput.value = strokeParts.join('+');
 
-  // 3) Stop after MAX_KEYS non-modifiers
-  if (nonModCount >= MAX_KEYS) {
-    listening = false;
-    accelInput.classList.remove('listening');
-  }
+  // Stop listening once a non-modifier is recorded
+  listening = false;
+  accelInput.classList.remove('listening');
 });
-
 
 // Populate dropdown of running apps
 async function loadAppList() {
@@ -92,22 +95,23 @@ async function refreshList() {
     li.textContent = `${b.accelerator} - ${b.app} `;
     const btn = document.createElement('button');
     btn.textContent = 'Remove';
-    btn.onclick = async () => {
+    btn.addEventListener('click', async () => {
       await ipcRenderer.invoke('remove-binding', b.accelerator);
       refreshList();
-    };
+    });
     li.appendChild(btn);
     listEl.appendChild(li);
   });
 }
 refreshList();
 
-// Add binding
-addBtn.onclick = async () => {
+// Add new binding
+addBtn.addEventListener('click', async () => {
   const accel   = accelInput.value;
   const appName = appSelect.value;
+  if (!accel) return;
   await ipcRenderer.invoke('save-binding', { accelerator: accel, app: appName });
   accelInput.value = '';
   loadAppList();
   refreshList();
-};
+});
