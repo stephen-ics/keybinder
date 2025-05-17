@@ -11,6 +11,19 @@
     <button id="listenBtn">Listen for Shortcut</button>
     <button id="stopBtn">Stop Listening</button>
 
+    <!-- Toggle between dropdown vs manual entry -->
+    <label style="display: block; margin-top: 8px;">
+      <input type="checkbox" id="manualToggle" />
+      Enter application name manually
+    </label>
+
+    <!-- Manual entry field (hidden by default) -->
+    <input
+      id="manualApp"
+      placeholder="Enter app name"
+      style="margin-top: 8px; width: 100%; display: none;"
+    />
+
     <!-- Search box to filter Applications -->
     <input
       id="searchApps"
