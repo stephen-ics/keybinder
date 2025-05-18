@@ -7,7 +7,7 @@ const path = require('path');
 
 const store = new Store({ name: 'bindings' });
 
-/** 1. Register IPC handlers immediately */
+/** 1. IPC handlers */
 ipcMain.handle('get-bindings', () => {
   return store.get('bindings', []);
 });
@@ -45,18 +45,14 @@ ipcMain.handle('remove-binding', (event, accel) => {
   registerShortcuts();
 });
 
-/** 2. Shortcut registration logic */
+/** 2. Shortcut registration */
 function registerShortcuts() {
   globalShortcut.unregisterAll();
   const bindings = store.get('bindings', []);
   console.log('Registering shortcuts:', bindings);
 
   for (const { accelerator, app: appName } of bindings) {
-    if (
-      typeof accelerator !== 'string' ||
-      // !accelerator.includes('+') ||
-      accelerator.startsWith('Listening')
-    ) {
+    if (typeof accelerator !== 'string' || accelerator.startsWith('Listening')) {
       console.warn(`Skipping invalid accelerator: "${accelerator}"`);
       continue;
     }
@@ -84,11 +80,18 @@ function createWindow() {
     width: 450,
     height: 360,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false
     }
   });
-  win.loadFile('index.html');
+
+  // In dev, point at Next.js; in prod, point at the static export
+  if (!app.isPackaged) {
+    win.loadURL('http://localhost:3000');
+  } else {
+    win.loadFile(path.join(__dirname, 'out', 'index.html'));
+  }
 }
 
 /** 4. App lifecycle */
