@@ -1,4 +1,267 @@
+/* ─── Theme tokens ─── */
+:root,
+[data-theme="dark"] {
+  --fg: #f5f5f7;
+  --fgSub: #a2a2a5;
+  --bg: #1c1c1e;
+  --field: #2a2a2d;
+  --divider: #2e2e32;
+  --accent: #0a84ff;
+  --danger: #ff453a;
+  --hover: rgba(255, 255, 255, 0.08);
+}
+[data-theme="light"] {
+  --fg: #1c1c1e;
+  --fgSub: #666;
+  --bg: #f5f5f7;
+  --field: #ffffff;
+  --divider: #d0d0d4;
+  --accent: #0a84ff;
+  --danger: #ff453a;
+  --hover: rgba(0, 0, 0, 0.06);
+}
+
+/* ─── Base reset ─── */
 html,
 body {
-    height: 100%;
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
+    Roboto, sans-serif;
+}
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* ─── Utility classes (from your original JSX styles) ─── */
+.root {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 32px 20px;
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.panelHead h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+.themeToggle {
+  background: none;
+  border: none;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--fg);
+}
+
+.formBlock {
+  margin-bottom: 24px;
+}
+.fieldRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.fieldRow:last-child {
+  margin-bottom: 0;
+}
+.fieldRow label {
+  flex: 0 0 110px;
+  font-size: 0.85rem;
+  color: var(--fgSub);
+}
+.field {
+  flex: 1 1 0;
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.input {
+  flex: 1 1 0;
+  min-width: 0;
+  font-size: 0.9rem;
+  padding: 9px 11px;
+  border: 1px solid var(--divider);
+  border-radius: 8px;
+  background: var(--field);
+  color: var(--fg);
+}
+.input::placeholder {
+  color: var(--fgSub);
+}
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.mono {
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+}
+
+.btn {
+  border: none;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+.btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.blue {
+  background: var(--accent);
+  color: #fff;
+}
+.gray {
+  background: var(--divider);
+  color: var(--fg);
+}
+.textDanger {
+  background: none;
+  color: var(--danger);
+}
+.tiny {
+  padding: 6px 12px;
+}
+.wide {
+  display: block;
+  width: 100%;
+  padding: 10px 0;
+  margin: 0 0 28px;
+}
+
+/* Switch */
+.switch {
+  -webkit-appearance: none;
+  width: 42px;
+  height: 24px;
+  border-radius: 12px;
+  background: #8e8e93;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s;
+}
+.switch::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+}
+.switch:checked {
+  background: var(--accent);
+}
+.switch:checked::before {
+  transform: translateX(18px);
+}
+
+/* Dropdown */
+.searchWrap {
+  flex: 1 1 0;
+  position: relative;
+}
+.dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  max-height: 200px;
+  overflow: auto;
+  background: var(--field);
+  border: 1px solid var(--divider);
+  border-radius: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  z-index: 20;
+}
+.dropdown li {
+  padding: 9px 14px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: var(--fg);
+}
+.dropdown li:hover {
+  background: var(--hover);
+}
+.dropdown .active {
+  background: rgba(10, 132, 255, 0.3);
+}
+
+/* Bindings */
+.note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+.bindingsCard {
+  margin-top: 32px;
+}
+.bindingsCard h3 {
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--fgSub);
+}
+.bindRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 24px;
+  border-top: 1px solid var(--divider);
+}
+.bindRow:first-child {
+  border-top: none;
+}
+.bindRow:hover {
+  background: var(--hover);
+}
+.keyCapsule {
+  background: var(--field);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  border: 1px solid var(--divider);
+}
+.appName {
+  flex: 1;
+  font-size: 0.87rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Mobile tweaks */
+@media (max-width: 480px) {
+  .fieldRow label {
+    flex: 0 0 100%;
+    margin-bottom: 4px;
+  }
+  .field {
+    flex-wrap: wrap;
+  }
 }
